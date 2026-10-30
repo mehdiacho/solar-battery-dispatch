@@ -120,7 +120,10 @@ def _charts(out: Path, runs, ctx) -> None:
     import matplotlib.pyplot as plt
 
     show = [d for d in runs if d.name in ("load_following", "optimal")] or runs[1:2]
-    for label, start_day in (("dry-season-week", 196), ("wet-season-week", 32)):
+    # The dry-season week, and the week the generator works hardest under the first strategy shown.
+    gen_daily = show[0].genset_kw.reshape(365, 24).sum(axis=1)
+    hardest = int(np.argmax([gen_daily[i:i + 7].sum() for i in range(365 - 7)]))
+    for label, start_day in (("dry-season-week", 196), ("hardest-week", hardest)):
         fig, axes = plt.subplots(len(show), 1, figsize=(12, 3.4 * len(show)), sharex=True, squeeze=False)
         sl = slice(start_day * 24, start_day * 24 + 7 * 24)
         hrs = np.arange(7 * 24)

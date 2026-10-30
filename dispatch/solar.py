@@ -101,11 +101,38 @@ def pv_output_kw(ghi_w_m2: np.ndarray, kwp: float, performance_ratio: float) -> 
     return kwp * ghi_w_m2 / 1000 * performance_ratio
 
 
+def pvgis_daily_path(data_dir: Path, lat: float, lon: float) -> Path:
+    return data_dir / f"pvgis_tmy_daily_{lat:.3f}_{lon:.3f}.csv"
+
+
+def load_pvgis_daily(path: Path, lat: float, lon: float, utc_offset: float = 2.0) -> np.ndarray:
+    """Hourly GHI (W/m2) from 365 PVGIS daily totals: each day's total is spread over the hours
+    with that day's clear-sky shape. Keeps the real day-to-day weather (what matters for battery
+    sizing) but smooths cloud within a day. Days that are 0 in the source (missing data) are
+    filled with the mean of the nearest non-zero days either side."""
+    with open(path, newline="") as f:
+        rows = [line for line in f if not line.startswith("#")]
+    daily = np.array([float(r["ghi_wh_m2"]) for r in csv.DictReader(rows)])
+    if len(daily) != 365:
+        raise ValueError(f"{path}: expected 365 days, got {len(daily)}")
+    for i in np.flatnonzero(daily <= 0):
+        prev = next((daily[j] for j in range(i - 1, -1, -1) if daily[j] > 0), None)
+        nxt = next((daily[j] for j in range(i + 1, 365) if daily[j] > 0), None)
+        daily[i] = np.mean([v for v in (prev, nxt) if v is not None])
+    shape = clear_sky_ghi(cos_zenith(lat, lon, utc_offset)).reshape(365, 24)
+    shape = shape / shape.sum(axis=1, keepdims=True)
+    return (shape * daily[:, None]).reshape(-1)
+
+
 def site_ghi(site: dict, data_dir: Path) -> tuple[np.ndarray, str]:
     """GHI for the site, preferring PVGIS data when it has been fetched."""
     p = pvgis_path(data_dir, site["lat"], site["lon"])
     if p.exists():
-        return load_pvgis(p), f"PVGIS typical year ({p.name})"
+        return load_pvgis(p), f"PVGIS typical year, hourly ({p.name})"
+    p = pvgis_daily_path(data_dir, site["lat"], site["lon"])
+    if p.exists():
+        ghi = load_pvgis_daily(p, site["lat"], site["lon"], site.get("utc_offset", 2.0))
+        return ghi, f"PVGIS typical year, daily totals with clear-sky hourly shape ({p.name})"
     s = site["solar_model"]
     ghi = modelled_ghi(site["lat"], site["lon"], s["annual_ghi_kwh_m2"], s["wet_months"],
                        s["wet_season_factor"], s["cloudy_day_prob"], s["seed"], site.get("utc_offset", 2.0))

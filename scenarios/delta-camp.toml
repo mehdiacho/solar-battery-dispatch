@@ -11,7 +11,7 @@ lat = -19.5
 lon = 23.0
 utc_offset = 2.0
 
-[site.solar_model]                 # used only until PVGIS data is fetched (scripts/fetch_pvgis.py)
+[site.solar_model]                 # fallback only: data/pvgis_tmy_daily_-19.500_23.000.csv (PVGIS, 2,169 kWh/m2) is used when present
 annual_ghi_kwh_m2 = 2150           # assumption: Botswana is roughly 2,000-2,300 kWh/m2/yr
 wet_months = [11, 12, 1, 2, 3]
 wet_season_factor = 0.92           # extra afternoon cloud in the rains
@@ -32,12 +32,12 @@ monthly_occupancy = [0.45, 0.40, 0.45, 0.60, 0.75, 0.90, 0.95, 0.95, 0.95, 0.90,
 monthly_cooling_factor = [1.10, 1.10, 1.05, 1.00, 0.95, 0.90, 0.90, 0.95, 1.10, 1.25, 1.20, 1.15]
 
 [pv]
-kwp = 100
+kwp = 55                           # sourced: a real Okavango Delta camp install (55 kWp, 195 kWh lithium), The Solar Zone, 2018
 performance_ratio = 0.78           # heat, dust, wiring and inverter losses
 
 [battery]
-capacity_kwh = 300
-power_kw = 75
+capacity_kwh = 195                 # sourced: same install (Blue Nova lithium bank)
+power_kw = 50                      # assumption (inverter ratings not published)
 round_trip_eff = 0.92              # typical for LFP
 soc_min = 0.10
 soc_max = 1.00

@@ -10,8 +10,8 @@ A desktop simulator that shows a Botswana site owner how much diesel solar and b
 
 ## Where it is
 
-- **Code:** `X:\FRONTIER\projects\solar-battery-dispatch` on Mehdi's PC for now.
-- **Repo:** to be created as private `mehdiacho/solar-battery-dispatch`. The first session couldn't create repos.
+- **Repo:** private [`mehdiacho/solar-battery-dispatch`](https://github.com/mehdiacho/solar-battery-dispatch), branch `main`.
+- **Copy on Mehdi's PC:** `X:\FRONTIER\projects\solar-battery-dispatch` (files, not a git checkout). Clone the repo to `X:\Projects\solar-battery-dispatch` to work on it locally.
 - **Toolchain:** Python 3.11+, numpy, scipy (HiGHS MILP), matplotlib, pytest. No PyBaMM yet.
 
 ## State
@@ -19,7 +19,7 @@ A desktop simulator that shows a Botswana site owner how much diesel solar and b
 | Milestone | State |
 |---|---|
 | M1 Core model: solar, load, generator, battery; load-following and cycle-charging rules; MILP optimiser; report and charts; size sweep; 9 tests | **Done** 2026-10-30 |
-| M2 Real inputs: PVGIS solar for the site; a real camp's load (meter log or generator log); delivered diesel price; real capex quotes | Next |
+| M2 Real inputs | **Part done** 2026-10-30: PVGIS solar for the site (daily totals, via the browser; the cloud session can't reach PVGIS); system sized like a real Delta camp (55 kWp, 195 kWh). Still placeholders: the load, delivered diesel price, capex. No public figures found for those. |
 | M3 Check against Xigera's published figures (400 kW PV, 1.14 MWh, ~95% solar, ~175,000 L/yr saved) | Open |
 | M4 Battery detail with PyBaMM: efficiency and ageing vs temperature, replacing the flat wear cost | Open (needs a PyBaMM install: Mehdi's OK) |
 | M5 Forecast-based controller: replace the perfect forecast with a realistic one (yesterday's weather, or a forecast API) and measure how much of the optimiser's gain survives | Open |
@@ -33,11 +33,12 @@ python -m pytest -q
 python -m dispatch run scenarios/delta-camp.toml          # results/delta-camp/: summary.md, summary.csv, charts
 python -m dispatch run scenarios/delta-camp.toml --fast   # rules only
 python -m dispatch sweep scenarios/delta-camp.toml        # sweep.csv, sweep-diesel.png
-python scripts/fetch_pvgis.py scenarios/delta-camp.toml   # download; needs Mehdi's OK; untested (no network to PVGIS in the first session)
+python scripts/fetch_pvgis.py scenarios/delta-camp.toml   # hourly PVGIS data; Mehdi OK'd PVGIS downloads 2026-10-30; script still untested
 ```
 
 ## Decisions
 
+- 2026-10-30: Mehdi OK'd downloading PVGIS data.
 - 2026-10-30: build idea #38 next; first site type is an off-grid Delta safari camp.
 - Off-grid first, because that's where diesel savings are largest and no tariff data is needed.
 - Hourly steps, one typical year. A 48 h rolling MILP with a perfect forecast is the benchmark, not a controller.
@@ -51,10 +52,14 @@ python scripts/fetch_pvgis.py scenarios/delta-camp.toml   # download; needs Mehd
 - Tilt is ignored (flat GHI × performance ratio).
 - Payback is simple (capex / first-year saving): no financing, no replacements, no generator savings.
 
+## Latest result (2026-10-30)
+
+At the real camp size, diesel falls from 57,800 L/yr (diesel only) to 9,900 L (load-following rule), 12,700 L (cycle-charging) or 7,000 L (optimised). Smarter control is worth about 2,900 L/yr here. See `README.md` and `docs/results/`.
+
 ## Next 3 steps
 
-1. Fetch PVGIS data for the site (Mehdi's OK) and rerun.
-2. Get one real camp's numbers: daily kWh or generator fuel logs, generator size, delivered diesel price.
+1. Get one real camp's numbers: daily kWh or generator fuel logs, generator size, delivered diesel price. None found publicly; needs a camp operator or installer.
+2. M5: a forecast-based controller, to see how much of the optimiser's 2,900 L survives without perfect foresight. This decides whether "smart control" is a product.
 3. Model Xigera as a check (M3).
 
 ## Conventions

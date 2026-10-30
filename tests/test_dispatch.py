@@ -86,3 +86,16 @@ def test_load_profile_follows_occupancy():
     dec = kw[-31 * 24:].sum() / 31
     assert jan == pytest.approx(5 * 24 + 20)
     assert dec == pytest.approx(5 * 24 + 100)
+
+
+def test_pvgis_daily_loader_keeps_totals_and_fills_gaps(tmp_path):
+    from dispatch.solar import load_pvgis_daily
+    days = [6000.0] * 365
+    days[10] = 0.0
+    p = tmp_path / "d.csv"
+    p.write_text("# comment\nday,ghi_wh_m2\n" + "".join(f"{i + 1},{v}\n" for i, v in enumerate(days)))
+    ghi = load_pvgis_daily(p, -19.5, 23.0)
+    daily = ghi.reshape(365, 24).sum(axis=1)
+    assert daily[10] == pytest.approx(6000)
+    assert daily[0] == pytest.approx(6000)
+    assert ghi.reshape(365, 24)[:, 0].max() == 0  # dark at midnight
