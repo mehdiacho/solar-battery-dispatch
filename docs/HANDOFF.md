@@ -18,7 +18,7 @@ A desktop simulator that shows a Botswana site owner how much diesel solar and b
 
 | Milestone | State |
 |---|---|
-| M1 Core model: solar, load, generator, battery; load-following and cycle-charging rules; MILP optimiser; report and charts; size sweep; 9 tests | **Done** 2026-10-30 |
+| M1 Core model: solar, load, generator, battery; load-following and cycle-charging rules; MILP optimiser; report and charts; size sweep; tests (10 now) | **Done** 2026-10-30 |
 | M2 Real inputs | **Part done** 2026-10-30: PVGIS solar for the site (daily totals, via the browser; the cloud session can't reach PVGIS); system sized like a real Delta camp (55 kWp, 195 kWh). Still placeholders: the load, delivered diesel price, capex. No public figures found for those. |
 | M3 Check against Xigera's published figures (400 kW PV, 1.14 MWh, ~95% solar, ~175,000 L/yr saved) | Open |
 | M4 Battery detail with PyBaMM: efficiency and ageing vs temperature, replacing the flat wear cost | Open (needs a PyBaMM install: Mehdi's OK) |
@@ -46,7 +46,7 @@ python scripts/fetch_pvgis.py scenarios/delta-camp.toml   # hourly PVGIS data; M
 
 ## Known limits
 
-- **The inputs are placeholders.** See `docs/assumptions.md`. The built-in solar model is probably too sunny; until PVGIS data is in, treat the solar share as optimistic.
+- **The load, delivered diesel price and capex are placeholders.** See `docs/assumptions.md`. Solar is real PVGIS data, but as daily totals: cloud within a day is smoothed.
 - The optimiser sees the future and keeps no reserve: in the wet season it lets the battery fall to 10% overnight. A real controller would hold a reserve.
 - Battery wear is a flat cost per kWh moved; there's no temperature or calendar ageing.
 - Tilt is ignored (flat GHI × performance ratio).
