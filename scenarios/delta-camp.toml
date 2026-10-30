@@ -1,0 +1,66 @@
+# A 10-tent safari camp in the Okavango Delta, off the grid, today run on a diesel generator.
+# Every number here is an assumption unless a source is given. See docs/assumptions.md.
+# Replace the load with a real meter log and the solar with PVGIS data before quoting a customer.
+
+name = "delta-camp"
+title = "10-tent Okavango Delta camp: solar + battery + diesel"
+
+[site]
+name = "Okavango Delta (illustrative location)"
+lat = -19.5
+lon = 23.0
+utc_offset = 2.0
+
+[site.solar_model]                 # used only until PVGIS data is fetched (scripts/fetch_pvgis.py)
+annual_ghi_kwh_m2 = 2150           # assumption: Botswana is roughly 2,000-2,300 kWh/m2/yr
+wet_months = [11, 12, 1, 2, 3]
+wet_season_factor = 0.92           # extra afternoon cloud in the rains
+cloudy_day_prob = 0.08             # base chance of an overcast day (x2.5 in the wet season, x0.5 in the dry)
+seed = 7
+
+[load]
+base_kw = 6.0                      # always on: cold rooms, water pumps, comms, staff village
+guest_kwh_per_day_full = 200       # extra energy per day at full occupancy
+day_noise = 0.08
+seed = 1
+# share of the guest energy in each hour, 00:00 to 23:00 (normalised automatically)
+hourly_shape = [1.5, 1.2, 1.0, 1.0, 1.2, 3.0, 5.5, 6.5, 5.5, 4.5, 4.5, 5.0,
+                5.5, 5.0, 4.5, 4.0, 4.0, 5.5, 7.5, 8.0, 7.0, 5.0, 3.0, 2.0]
+# share of beds sold, Jan..Dec: green season low, dry season (Jun-Oct) high
+monthly_occupancy = [0.45, 0.40, 0.45, 0.60, 0.75, 0.90, 0.95, 0.95, 0.95, 0.90, 0.70, 0.60]
+# fans and air-con: hottest Sep-Dec
+monthly_cooling_factor = [1.10, 1.10, 1.05, 1.00, 0.95, 0.90, 0.90, 0.95, 1.10, 1.25, 1.20, 1.15]
+
+[pv]
+kwp = 100
+performance_ratio = 0.78           # heat, dust, wiring and inverter losses
+
+[battery]
+capacity_kwh = 300
+power_kw = 75
+round_trip_eff = 0.92              # typical for LFP
+soc_min = 0.10
+soc_max = 1.00
+soc_start = 0.80
+replacement_p_per_kwh = 3000       # assumption, about USD 220/kWh; drives the wear cost
+cycle_life = 6000                  # LFP, to about 80% capacity
+
+[genset]
+rated_kw = 40
+min_load_frac = 0.30               # running lightly loaded glazes engines; most makers say 30%+
+fuel_a_l_per_h_per_kw_rated = 0.08145   # common default fuel curve (no-load burn)
+fuel_b_l_per_kwh = 0.246                # common default fuel curve (per kWh produced)
+start_cost_p = 5.0
+
+[costs]
+diesel_p_per_l = 23.76             # BERA, diesel 50ppm, from 23 Oct 2026 (Daily News)
+diesel_delivery_p_per_l = 0.0      # set this: trucking, barging or flying fuel into the Delta adds a lot
+pv_capex_p_per_kwp = 9000          # assumption, installed, remote site
+battery_capex_p_per_kwh = 4000     # assumption, installed with inverters
+
+[dispatch]
+cycle_charging_setpoint = 0.80
+
+[sweep]
+pv_kwp = [0, 50, 100, 150, 200, 250, 300]
+battery_kwh = [0, 100, 200, 300, 400, 600, 800]
